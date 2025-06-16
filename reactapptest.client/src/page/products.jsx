@@ -1,0 +1,227 @@
+﻿import React, { useEffect, useState } from 'react';
+import './Products.css';
+
+const Products = () => {
+    const [products, setProducts] = useState([]);
+    const [filteredProducts, setFilteredProducts] = useState([]);
+
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Filter states
+    const [sortFilter, setSortFilter] = useState('');
+    const [brandFilter, setBrandFilter] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('');
+    const [productTypeFilter, setProductTypeFilter] = useState('');
+    const [sizeFilter, setSizeFilter] = useState('');
+    const [styleFilter, setStyleFilter] = useState('');
+    const [colorFilter, setColorFilter] = useState('');
+    const [bodyFitFilter, setBodyFitFilter] = useState('');
+    const [priceRangeFilter, setPriceRangeFilter] = useState('');
+
+    // Fetch products from API
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetch('https://localhost:7100/api/products');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            const data = await response.json();
+            if (!Array.isArray(data)) throw new Error('Expected an array of products');
+
+            setProducts(data);
+            setFilteredProducts(data); // Initially all products visible
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    // Handle filtering and sorting
+    useEffect(() => {
+        let filtered = [...products];
+
+        // Apply filters
+        if (brandFilter) {
+            filtered = filtered.filter(p => p.brand === brandFilter);
+        }
+        if (categoryFilter) {
+            filtered = filtered.filter(p => p.category === categoryFilter);
+        }
+        if (productTypeFilter) {
+            filtered = filtered.filter(p => p.productType === productTypeFilter);
+        }
+        if (sizeFilter) {
+            filtered = filtered.filter(p => p.size === sizeFilter);
+        }
+        if (styleFilter) {
+            filtered = filtered.filter(p => p.style === styleFilter);
+        }
+        if (colorFilter) {
+            filtered = filtered.filter(p => p.color === colorFilter);
+        }
+        if (bodyFitFilter) {
+            filtered = filtered.filter(p => p.bodyFit === bodyFitFilter);
+        }
+        if (priceRangeFilter) {
+            // Handle price range filtering based on selected range
+            const [min, max] = priceRangeFilter.split('-').map(Number);
+            filtered = filtered.filter(p => p.price >= min && p.price <= max);
+        }
+
+        // Apply sorting
+        if (sortFilter) {
+            switch (sortFilter) {
+                case 'price-low':
+                    filtered.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price-high':
+                    filtered.sort((a, b) => b.price - a.price);
+                    break;
+                case 'name-az':
+                    filtered.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'name-za':
+                    filtered.sort((a, b) => b.name.localeCompare(a.name));
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        setFilteredProducts(filtered);
+    }, [sortFilter, brandFilter, categoryFilter, productTypeFilter, sizeFilter, styleFilter, colorFilter, bodyFitFilter, priceRangeFilter, products]);
+
+    // Extract unique values for filters
+    const uniqueBrands = [...new Set(products.map(p => p.brand))];
+    const uniqueCategories = [...new Set(products.map(p => p.category))];
+    const uniqueProductTypes = [...new Set(products.map(p => p.productType))];
+    const uniqueSizes = [...new Set(products.map(p => p.size))];
+    const uniqueStyles = [...new Set(products.map(p => p.style))];
+    const uniqueColors = [...new Set(products.map(p => p.color))];
+    const uniqueBodyFits = [...new Set(products.map(p => p.bodyFit))];
+
+    return (
+        <div className="products-page">
+            {/* Filters */}
+            <div className="filters-container">
+                {/* First row of filters */}
+                <div className="filter-row">
+                    <select value={sortFilter} onChange={e => setSortFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Sort</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="name-az">Name: A-Z</option>
+                        <option value="name-za">Name: Z-A</option>
+                    </select>
+
+                    <select value={brandFilter} onChange={e => setBrandFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">All</option>
+                        {uniqueBrands.map(brand => (
+                            <option key={brand} value={brand}>{brand}</option>
+                        ))}
+                    </select>
+
+                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Category</option>
+                        {uniqueCategories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+
+                    <select value={productTypeFilter} onChange={e => setProductTypeFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Product Type</option>
+                        {uniqueProductTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                        ))}
+                    </select>
+
+                    <select value={sizeFilter} onChange={e => setSizeFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Size</option>
+                        {uniqueSizes.map(size => (
+                            <option key={size} value={size}>{size}</option>
+                        ))}
+                    </select>
+
+                    <select value={styleFilter} onChange={e => setStyleFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Style</option>
+                        {uniqueStyles.map(style => (
+                            <option key={style} value={style}>{style}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Second row of filters */}
+                <div className="filter-row">
+                    <select value={colorFilter} onChange={e => setColorFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Colour</option>
+                        {uniqueColors.map(color => (
+                            <option key={color} value={color}>{color}</option>
+                        ))}
+                    </select>
+
+                    <select value={bodyFitFilter} onChange={e => setBodyFitFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Body Fit</option>
+                        {uniqueBodyFits.map(fit => (
+                            <option key={fit} value={fit}>{fit}</option>
+                        ))}
+                    </select>
+
+                    <select value={sizeFilter} onChange={e => setSizeFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Size</option>
+                        {uniqueSizes.map(size => (
+                            <option key={size} value={size}>{size}</option>
+                        ))}
+                    </select>
+
+                    <select value={priceRangeFilter} onChange={e => setPriceRangeFilter(e.target.value)} className="filter-dropdown">
+                        <option value="">Price Range</option>
+                        <option value="0-25">$0 - $25</option>
+                        <option value="25-50">$25 - $50</option>
+                        <option value="50-100">$50 - $100</option>
+                        <option value="100-200">$100 - $200</option>
+                        <option value="200-999">$200+</option>
+                    </select>
+                </div>
+
+                {error && <p className="error-msg">Error: {error}</p>}
+            </div>
+
+            {/* Products grid */}
+            <div className="products-grid">
+                {loading ? (
+                    <p>Loading products...</p>
+                ) : filteredProducts.length === 0 ? (
+                    <p>No products found.</p>
+                ) : (
+                    filteredProducts.map(product => (
+                        <div key={product.id} className="product-card">
+                            <div className="product-image-placeholder">
+                                <img src={product.imageUrl} alt={product.name} className="product-image" />
+                            </div>
+                            <h4>{product.name}</h4>
+                            <p className="product-category">{product.category}</p>
+                            <p className="product-brand">{product.brand}</p>
+                            <p className="product-price">${product.price?.toFixed(2)}</p>
+                            <p className={`stock-status ${product.inStock ? 'in-stock' : 'out-of-stock'}`}>
+                                {product.inStock ? 'In Stock' : 'Out of Stock'}
+                            </p>
+                            <button disabled={!product.inStock} className="add-to-cart-btn">
+                                {product.inStock ? 'Add to Cart' : 'Unavailable'}
+                            </button>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default Products;
