@@ -195,31 +195,56 @@ const Products = () => {
             </div>
 
             {/* Products grid */}
-            <div className="products-grid">
+            <div className="row">
                 {loading ? (
                     <p>Loading products...</p>
                 ) : filteredProducts.length === 0 ? (
                     <p>No products found.</p>
                 ) : (
                     filteredProducts.map(product => (
-                        <div key={product.id} className="product-card">
-                            <div className="product-image-placeholder">
-                                <img src={product.imageUrl} alt={product.name} className="product-image" />
+                        <div key={product.id} className="col-3 mb-4">
+                            <div
+                                className="position-relative"
+                                style={{
+                                    height: "500px",
+                                    width: "100%",
+                                    borderRadius: "8px",
+                                    overflow: "hidden",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                <img
+                                    src={product.imageUrl}
+                                    alt={product.name}
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                        display: "block",
+                                    }}
+                                />
+
+                                <div
+                                    className="position-absolute bottom-0 start-0 w-100 px-3 py-2"
+                                    style={{
+                                        background: "white",  
+                                        color: "#000",                            
+                                        borderBottomLeftRadius: "8px",
+                                        borderBottomRightRadius: "8px",
+                                    }}
+                                >
+                                    <div style={{ fontWeight: "600", fontSize: "1rem" }}>{product.name}</div>
+                                    <div style={{ fontSize: "0.9rem" }}>${product.price.toFixed(2)}</div>
+                                </div>
+
                             </div>
-                            <h4>{product.name}</h4>
-                            <p className="product-category">{product.category}</p>
-                            <p className="product-brand">{product.brand}</p>
-                            <p className="product-price">${product.price?.toFixed(2)}</p>
-                            <p className={`stock-status ${product.inStock ? 'in-stock' : 'out-of-stock'}`}>
-                                {product.inStock ? 'In Stock' : 'Out of Stock'}
-                            </p>
-                            <button disabled={!product.inStock} className="add-to-cart-btn">
-                                {product.inStock ? 'Add to Cart' : 'Unavailable'}
-                            </button>
                         </div>
                     ))
                 )}
             </div>
+
+
         </div>
     );
 };
