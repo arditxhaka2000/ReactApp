@@ -4,11 +4,11 @@ import './Products.css';
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
+    const [visibleCount, setVisibleCount] = useState(12);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Filter states
     const [sortFilter, setSortFilter] = useState('');
     const [brandFilter, setBrandFilter] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
@@ -19,7 +19,6 @@ const Products = () => {
     const [bodyFitFilter, setBodyFitFilter] = useState('');
     const [priceRangeFilter, setPriceRangeFilter] = useState('');
 
-    // Fetch products from API
     const fetchProducts = async () => {
         try {
             setLoading(true);
@@ -32,7 +31,7 @@ const Products = () => {
             if (!Array.isArray(data)) throw new Error('Expected an array of products');
 
             setProducts(data);
-            setFilteredProducts(data); // Initially all products visible
+            setFilteredProducts(data);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -44,39 +43,21 @@ const Products = () => {
         fetchProducts();
     }, []);
 
-    // Handle filtering and sorting
     useEffect(() => {
         let filtered = [...products];
 
-        // Apply filters
-        if (brandFilter) {
-            filtered = filtered.filter(p => p.brand === brandFilter);
-        }
-        if (categoryFilter) {
-            filtered = filtered.filter(p => p.category === categoryFilter);
-        }
-        if (productTypeFilter) {
-            filtered = filtered.filter(p => p.productType === productTypeFilter);
-        }
-        if (sizeFilter) {
-            filtered = filtered.filter(p => p.size === sizeFilter);
-        }
-        if (styleFilter) {
-            filtered = filtered.filter(p => p.style === styleFilter);
-        }
-        if (colorFilter) {
-            filtered = filtered.filter(p => p.color === colorFilter);
-        }
-        if (bodyFitFilter) {
-            filtered = filtered.filter(p => p.bodyFit === bodyFitFilter);
-        }
+        if (brandFilter) filtered = filtered.filter(p => p.brand === brandFilter);
+        if (categoryFilter) filtered = filtered.filter(p => p.category === categoryFilter);
+        if (productTypeFilter) filtered = filtered.filter(p => p.productType === productTypeFilter);
+        if (sizeFilter) filtered = filtered.filter(p => p.size === sizeFilter);
+        if (styleFilter) filtered = filtered.filter(p => p.style === styleFilter);
+        if (colorFilter) filtered = filtered.filter(p => p.color === colorFilter);
+        if (bodyFitFilter) filtered = filtered.filter(p => p.bodyFit === bodyFitFilter);
         if (priceRangeFilter) {
-            // Handle price range filtering based on selected range
             const [min, max] = priceRangeFilter.split('-').map(Number);
             filtered = filtered.filter(p => p.price >= min && p.price <= max);
         }
 
-        // Apply sorting
         if (sortFilter) {
             switch (sortFilter) {
                 case 'price-low':
@@ -97,9 +78,20 @@ const Products = () => {
         }
 
         setFilteredProducts(filtered);
-    }, [sortFilter, brandFilter, categoryFilter, productTypeFilter, sizeFilter, styleFilter, colorFilter, bodyFitFilter, priceRangeFilter, products]);
 
-    // Extract unique values for filters
+
+        setVisibleCount(12); // reset visible count when filters change
+
+    }, [
+        products, brandFilter, categoryFilter, productTypeFilter,
+        sizeFilter, styleFilter, colorFilter, bodyFitFilter,
+        priceRangeFilter, sortFilter
+    ]);
+
+    const handleLoadMore = () => {
+        setVisibleCount(prev => prev + 12);
+    };
+
     const uniqueBrands = [...new Set(products.map(p => p.brand))];
     const uniqueCategories = [...new Set(products.map(p => p.category))];
     const uniqueProductTypes = [...new Set(products.map(p => p.productType))];
@@ -112,7 +104,6 @@ const Products = () => {
         <div className="products-page">
             {/* Filters */}
             <div className="filters-container">
-                {/* First row of filters */}
                 <div className="filter-row">
                     <select value={sortFilter} onChange={e => setSortFilter(e.target.value)} className="filter-dropdown">
                         <option value="">Sort</option>
@@ -124,61 +115,39 @@ const Products = () => {
 
                     <select value={brandFilter} onChange={e => setBrandFilter(e.target.value)} className="filter-dropdown">
                         <option value="">All</option>
-                        {uniqueBrands.map(brand => (
-                            <option key={brand} value={brand}>{brand}</option>
-                        ))}
+                        {uniqueBrands.map(brand => <option key={brand} value={brand}>{brand}</option>)}
                     </select>
 
                     <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="filter-dropdown">
                         <option value="">Category</option>
-                        {uniqueCategories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
+                        {uniqueCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                     </select>
 
                     <select value={productTypeFilter} onChange={e => setProductTypeFilter(e.target.value)} className="filter-dropdown">
                         <option value="">Product Type</option>
-                        {uniqueProductTypes.map(type => (
-                            <option key={type} value={type}>{type}</option>
-                        ))}
+                        {uniqueProductTypes.map(type => <option key={type} value={type}>{type}</option>)}
                     </select>
 
                     <select value={sizeFilter} onChange={e => setSizeFilter(e.target.value)} className="filter-dropdown">
                         <option value="">Size</option>
-                        {uniqueSizes.map(size => (
-                            <option key={size} value={size}>{size}</option>
-                        ))}
+                        {uniqueSizes.map(size => <option key={size} value={size}>{size}</option>)}
                     </select>
 
                     <select value={styleFilter} onChange={e => setStyleFilter(e.target.value)} className="filter-dropdown">
                         <option value="">Style</option>
-                        {uniqueStyles.map(style => (
-                            <option key={style} value={style}>{style}</option>
-                        ))}
+                        {uniqueStyles.map(style => <option key={style} value={style}>{style}</option>)}
                     </select>
                 </div>
 
-                {/* Second row of filters */}
                 <div className="filter-row">
                     <select value={colorFilter} onChange={e => setColorFilter(e.target.value)} className="filter-dropdown">
                         <option value="">Colour</option>
-                        {uniqueColors.map(color => (
-                            <option key={color} value={color}>{color}</option>
-                        ))}
+                        {uniqueColors.map(color => <option key={color} value={color}>{color}</option>)}
                     </select>
 
                     <select value={bodyFitFilter} onChange={e => setBodyFitFilter(e.target.value)} className="filter-dropdown">
                         <option value="">Body Fit</option>
-                        {uniqueBodyFits.map(fit => (
-                            <option key={fit} value={fit}>{fit}</option>
-                        ))}
-                    </select>
-
-                    <select value={sizeFilter} onChange={e => setSizeFilter(e.target.value)} className="filter-dropdown">
-                        <option value="">Size</option>
-                        {uniqueSizes.map(size => (
-                            <option key={size} value={size}>{size}</option>
-                        ))}
+                        {uniqueBodyFits.map(fit => <option key={fit} value={fit}>{fit}</option>)}
                     </select>
 
                     <select value={priceRangeFilter} onChange={e => setPriceRangeFilter(e.target.value)} className="filter-dropdown">
@@ -201,7 +170,7 @@ const Products = () => {
                 ) : filteredProducts.length === 0 ? (
                     <p>No products found.</p>
                 ) : (
-                    filteredProducts.map(product => (
+                    filteredProducts.slice(0, visibleCount).map(product => (
                         <div key={product.id} className="col-3 mb-4">
                             <div
                                 className="position-relative"
@@ -228,8 +197,8 @@ const Products = () => {
                                 <div
                                     className="position-absolute bottom-0 start-0 w-100 px-3 py-2"
                                     style={{
-                                        background: "white",  
-                                        color: "#000",                            
+                                        background: "white",
+                                        color: "#000",
                                         borderBottomLeftRadius: "8px",
                                         borderBottomRightRadius: "8px",
                                     }}
@@ -237,14 +206,26 @@ const Products = () => {
                                     <div style={{ fontWeight: "600", fontSize: "1rem" }}>{product.name}</div>
                                     <div style={{ fontSize: "0.9rem" }}>${product.price.toFixed(2)}</div>
                                 </div>
-
                             </div>
                         </div>
                     ))
                 )}
             </div>
 
+            {/* Load More button */}
+            {visibleCount < filteredProducts.length && (
+                <div className="d-flex justify-content-center my-4">
+                    <button className="load-more-btn" onClick={handleLoadMore}>
+                        Load More
+                    </button>
+                </div>
+            )}
 
+            {filteredProducts.length > 0 && (
+                <p className="text-muted text-center my-3">
+                    You've viewed {filteredProducts.slice(0, visibleCount).length} of {filteredProducts.length} products
+                </p>
+            )}
         </div>
     );
 };

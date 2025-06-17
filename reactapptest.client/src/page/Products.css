@@ -108,3 +108,21 @@ h3 {
         width: 100%;
     }
 }
+.products-summary {
+    font-size: 0.95rem;
+    color: #555;
+}
+.load-more-btn {
+    background-color: white;
+    color: black;
+    border: 2px solid black;
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+    .load-more-btn:hover {
+        background-color: white;
+    }
