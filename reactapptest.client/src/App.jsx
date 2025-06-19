@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
 import Home from './page/Home';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import HeroSlider from './components/HeroSlider';
 
 
 const App = () => {
-    return (
-        <>
-            <main>
-                <Home />
-            </main>
-        </>
-    );
+    return <Home />;
 };
 
 export default App;

@@ -46,7 +46,32 @@ namespace ReactAppTest.Server.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("ReactAppTest.Server.Models.Product", b =>
+            modelBuilder.Entity("ReactAppTest.Server.Models.Collections", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Collections");
+                });
+
+            modelBuilder.Entity("ReactAppTest.Server.Models.Products", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -59,6 +84,9 @@ namespace ReactAppTest.Server.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CollectionsId")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
@@ -81,10 +109,12 @@ namespace ReactAppTest.Server.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("CollectionsId");
+
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("ReactAppTest.Server.Models.Product", b =>
+            modelBuilder.Entity("ReactAppTest.Server.Models.Products", b =>
                 {
                     b.HasOne("ReactAppTest.Server.Models.Categories", "Category")
                         .WithMany("Products")
@@ -92,10 +122,19 @@ namespace ReactAppTest.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ReactAppTest.Server.Models.Collections", null)
+                        .WithMany("Products")
+                        .HasForeignKey("CollectionsId");
+
                     b.Navigation("Category");
                 });
 
             modelBuilder.Entity("ReactAppTest.Server.Models.Categories", b =>
+                {
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("ReactAppTest.Server.Models.Collections", b =>
                 {
                     b.Navigation("Products");
                 });
