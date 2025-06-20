@@ -10,7 +10,11 @@ const Home = () => {
             <HeroSlider />
             <Collections />
             <Banner />
-            <ProductSlide/>
+            <ProductSlide />
+            <Banner 
+                imageUrl="/Images/Banner_2.jpeg"
+                
+            />
         </div>
     );
 };

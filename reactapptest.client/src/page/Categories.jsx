@@ -1,7 +1,8 @@
 import React from 'react';
+import './Categories.css'; 
 
 const Categories = () => {
-  // TODO: Replace with actual categories data fetching logic
+  
   const categories = [
     { id: 1, name: 'Books' },
     { id: 2, name: 'Electronics' },
@@ -9,7 +10,7 @@ const Categories = () => {
   ];
 
   return (
-    <div>
+      <div className="category-page">
       <h1>Categories</h1>
       <ul>
         {categories.map(category => (

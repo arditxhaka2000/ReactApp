@@ -29,9 +29,33 @@
 
     .hero-slide video {
         width: 100vw;
-        height: auto;
-        max-height: 100vh;
-        display: block;
+        height: 100vh;
         object-fit: cover;
+        object-position: center;
+        display: block;
         background-color: black;
     }
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+    .hero-slide video {
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        object-position: center;
+        /* Ensure video covers full screen on mobile */
+        min-width: 100vw;
+        min-height: 100vh;
+    }
+}
+
+/* For very tall mobile screens (like modern phones) */
+@media (max-width: 768px) and (max-aspect-ratio: 9/16) {
+    .hero-slide video {
+        width: auto;
+        height: 100vh;
+        min-width: 100vw;
+        object-fit: cover;
+        object-position: center;
+    }
+}
