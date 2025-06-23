@@ -7,12 +7,12 @@ const ProductSlide = () => {
     const [products, setProducts] = useState([]);
 
     useEffect(() => {
-        fetch('https://localhost:7100/api/products')
+        fetch('https://localhost:7100/api/Products')
             .then(res => res.json())
             .then(data => setProducts(data.slice(0, 10)))
             .catch(console.error);
     }, []);
-
+    console.log(products);
     return (
         <div className="product-slider-wrapper">
             <Swiper slidesPerView={5} spaceBetween={10} loop={true}>
@@ -20,7 +20,7 @@ const ProductSlide = () => {
                     <SwiperSlide key={p.id}>
                         <div className="product-card">
                             <div className="image-container">
-                                <img src={p.imageUrl} alt={p.name} />
+                                <img src={p.images} alt={p.name} />
                                 <button className="quick-buy-btn">Quick Buy</button>
                             </div>
                             <div className="product-info">
