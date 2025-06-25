@@ -18,6 +18,10 @@ namespace ReactAppTest.Server.Models
         [MaxLength(255)]
         public string Email { get; set; }
 
+        [Required]
+        [MaxLength(255)]
+        public string PasswordHash { get; set; }
+
         [MaxLength(20)]
         public string? PhoneNumber { get; set; }
 

@@ -320,3 +320,313 @@
         width: 100%;
     }
 }
+/* Add these styles to your existing CSS - Authentication enhancements */
+
+/* User Avatar and Info Display */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-info-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.2;
+    margin-left: 8px;
+}
+
+.user-name-compact {
+    font-size: 0.875rem;
+    font-weight: 600;
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-status {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* Enhanced dropdown content to replace your existing .dropdown-content */
+.user-dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #ffffff;
+    color: #333;
+    min-width: 280px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    z-index: 1000;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.dropdown:hover .user-dropdown-content {
+    display: block;
+    animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* User dropdown header */
+.dropdown-user-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.dropdown-user-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.dropdown-user-details {
+    min-width: 0;
+}
+
+.dropdown-user-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 0.125rem;
+}
+
+.dropdown-user-email {
+    font-size: 0.75rem;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Guest header */
+.dropdown-guest-header {
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.dropdown-guest-text {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+/* Dropdown sections */
+.dropdown-section {
+    padding: 0.5rem 0;
+}
+
+    .dropdown-section:not(:last-child) {
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+/* Enhanced dropdown items */
+.dropdown-item {
+    color: #333 !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+    .dropdown-item:hover {
+        background: #f3f4f6;
+        color: #000 !important;
+        text-decoration: none;
+    }
+
+    .dropdown-item svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+    .dropdown-item.primary-action {
+        background: #000;
+        color: white;
+        font-weight: 600;
+        margin: 0.5rem;
+        border-radius: 8px;
+    }
+
+        .dropdown-item.primary-action:hover {
+            background: #374151;
+            color: white;
+        }
+
+    .dropdown-item.danger {
+        color: #dc2626;
+    }
+
+        .dropdown-item.danger:hover {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+/* Badges */
+.dropdown-badge {
+    margin-left: auto;
+    background: #dc2626;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.125rem 0.375rem;
+    border-radius: 9999px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Quick stats */
+.dropdown-stats {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    font-size: 0.75rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stat-number {
+    font-weight: 600;
+    color: #000;
+}
+
+.stat-label {
+    color: #666;
+}
+
+/* Mobile user enhancements - enhance your existing .mobile-account-section */
+.mobile-user-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.mobile-user-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.mobile-user-info {
+    min-width: 0;
+}
+
+.mobile-user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.125rem;
+}
+
+.mobile-user-email {
+    font-size: 0.8rem;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Ensure user avatar follows your color scheme when scrolled */
+.site-header.scrolled .user-avatar,
+.site-headerMain .user-avatar {
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .user-info-compact {
+        display: none;
+    }
+
+    .user-dropdown-content {
+        min-width: 260px;
+        right: -1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-dropdown-content {
+        min-width: 240px;
+        right: -0.5rem;
+    }
+}
+.dropdown-user-name,
+.dropdown-user-email,
+.dropdown-guest-text,
+.stat-number,
+.stat-label {
+    color: #333 !important;
+}
+
+.dropdown-user-email {
+    color: #666 !important;
+}
+
+.stat-label {
+    color: #666 !important;
+}

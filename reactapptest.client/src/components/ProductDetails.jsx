@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Heart, Share2, Star, Truck, RotateCcw, Shield, ChevronDown, ChevronUp, Minus, Plus, ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, Share2, Star, Truck, RotateCcw, Shield, ChevronDown, ChevronUp, Minus, Plus, ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import './ProductDetails.css';
+import { useNavigate } from 'react-router-dom';
 
 const ProductDetails = ({ productId = 1 }) => {
     const [product, setProduct] = useState(null);
@@ -12,30 +13,35 @@ const ProductDetails = ({ productId = 1 }) => {
     const [showSizeGuide, setShowSizeGuide] = useState(false);
     const [activeTab, setActiveTab] = useState('description');
     const [isWishlisted, setIsWishlisted] = useState(false);
-
+    const navigate = useNavigate();
     // Image zoom and fullscreen states
     const [isZoomed, setIsZoomed] = useState(false);
     const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
     const [isFullscreen, setIsFullscreen] = useState(false);
 
+    // Bag drawer states
+    const [showBagDrawer, setShowBagDrawer] = useState(false);
+    const [bagItems, setBagItems] = useState([]);
+    const [drawerSize, setDrawerSize] = useState('');
+    const [drawerQuantity, setDrawerQuantity] = useState(1);
+
     useEffect(() => {
         fetchProduct();
     }, [productId]);
+
     useEffect(() => {
         if (isFullscreen) {
-            // Hide header when fullscreen is open
             document.querySelector('.site-headerMain')?.style.setProperty('display', 'none', 'important');
         } else {
-            // Show header when fullscreen is closed
             document.querySelector('.site-headerMain')?.style.setProperty('display', '', '');
         }
     }, [isFullscreen]);
 
-    // Also update your existing useEffect for keyboard events:
     useEffect(() => {
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [isFullscreen]);
+
     const fetchProduct = async () => {
         try {
             setLoading(true);
@@ -57,6 +63,12 @@ const ProductDetails = ({ productId = 1 }) => {
         setQuantity(Math.max(1, quantity + change));
     };
 
+    const handleDrawerQuantityChange = (change) => {
+        const maxStock = getDrawerSizeStock();
+        const newQuantity = Math.max(1, Math.min(10, Math.min(maxStock, drawerQuantity + change)));
+        setDrawerQuantity(newQuantity);
+    };
+
     const calculateDiscountPercentage = () => {
         if (product?.originalPrice && product?.price) {
             return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
@@ -68,6 +80,64 @@ const ProductDetails = ({ productId = 1 }) => {
         if (!selectedSize || !product?.sizes) return 0;
         const sizeObj = product.sizes.find(s => s.sizeId.toString() === selectedSize);
         return sizeObj?.stockQuantity || 0;
+    };
+
+    const getDrawerSizeStock = () => {
+        if (!drawerSize || !product?.sizes) return 0;
+        const sizeObj = product.sizes.find(s => s.sizeId.toString() === drawerSize);
+        return sizeObj?.stockQuantity || 0;
+    };
+
+    const getSizeName = (sizeId) => {
+        if (!product?.sizes) return '';
+        const sizeObj = product.sizes.find(s => s.sizeId.toString() === sizeId);
+        return sizeObj?.sizeName || '';
+    };
+
+    const handleAddToBag = () => {
+        if (!selectedSize || !product.inStock) return;
+
+        const newItem = {
+            id: Date.now(),
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.images[0]?.imageUrl,
+            size: selectedSize,
+            quantity: quantity,
+            color: product.color
+        };
+
+        setBagItems(prev => [...prev, newItem]);
+        setDrawerSize(selectedSize);
+        setDrawerQuantity(quantity);
+        setShowBagDrawer(true);
+    };
+    const handleProceedToCheckout = () => {
+        const checkoutItems = [{
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.images[0]?.imageUrl,
+            size: drawerSize,
+            quantity: drawerQuantity,
+            color: product.color
+        }];
+
+        navigate('/checkout', {
+            state: {
+                cartItems: checkoutItems
+            }
+        });
+    };
+    const handleDrawerSizeChange = (newSizeId) => {
+        setDrawerSize(newSizeId);
+        const maxStock = product.sizes.find(s => s.sizeId.toString() === newSizeId)?.stockQuantity || 0;
+        setDrawerQuantity(Math.min(drawerQuantity, Math.min(10, maxStock)));
+    };
+
+    const closeBagDrawer = () => {
+        setShowBagDrawer(false);
     };
 
     const renderStars = (rating) => {
@@ -128,11 +198,6 @@ const ProductDetails = ({ productId = 1 }) => {
             }
         }
     };
-
-    useEffect(() => {
-        document.addEventListener('keydown', handleKeyDown);
-        return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [isFullscreen]);
 
     if (loading) {
         return (
@@ -401,6 +466,7 @@ const ProductDetails = ({ productId = 1 }) => {
                         <button
                             className="add-to-bag-button"
                             disabled={!selectedSize || !product.inStock}
+                            onClick={handleAddToBag}
                         >
                             {!product.inStock
                                 ? 'Out of Stock'
@@ -443,12 +509,122 @@ const ProductDetails = ({ productId = 1 }) => {
                 </div>
             </div>
 
+            {/* Bag Drawer */}
+            {showBagDrawer && (
+                <>
+                    <div className="bag-drawer-overlay" onClick={closeBagDrawer}></div>
+                    <div className="bag-drawer">
+                        <div className="bag-drawer-header">
+                            <div className="bag-drawer-title">
+                                <ShoppingBag size={20} />
+                                <h3>Added to Bag</h3>
+                            </div>
+                            <button onClick={closeBagDrawer} className="bag-drawer-close">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="bag-drawer-content">
+                            <div className="bag-item">
+                                <div className="bag-item-image">
+                                    <img
+                                        src={product.images[0]?.imageUrl}
+                                        alt={product.name}
+                                    />
+                                </div>
+
+                                <div className="bag-item-details">
+                                    <h4 className="bag-item-name">{product.name}</h4>
+                                    {product.color && (
+                                        <p className="bag-item-color">{product.color}</p>
+                                    )}
+                                    <p className="bag-item-price">£{product.price.toFixed(2)}</p>
+
+                                    {/* Size selection in drawer */}
+                                    <div className="bag-item-size">
+                                        <label>Size (UK):</label>
+                                        <select
+                                            value={drawerSize}
+                                            onChange={(e) => handleDrawerSizeChange(e.target.value)}
+                                            className="bag-size-select"
+                                        >
+                                            {product.sizes
+                                                .filter(size => size.isInStock && size.stockQuantity > 0)
+                                                .map((size) => (
+                                                    <option key={size.sizeId} value={size.sizeId.toString()}>
+                                                        {size.sizeName.replace('UK', '')}
+                                                        {size.stockQuantity <= 5 ? ` (${size.stockQuantity} left)` : ''}
+                                                    </option>
+                                                ))
+                                            }
+                                        </select>
+                                    </div>
+
+                                    {/* Quantity selection in drawer */}
+                                    <div className="bag-item-quantity">
+                                        <label>Quantity:</label>
+                                        <div className="bag-quantity-controls">
+                                            <button
+                                                onClick={() => handleDrawerQuantityChange(-1)}
+                                                className="bag-quantity-button"
+                                                disabled={drawerQuantity <= 1}
+                                            >
+                                                <Minus size={14} />
+                                            </button>
+                                            <span className="bag-quantity-display">{drawerQuantity}</span>
+                                            <button
+                                                onClick={() => handleDrawerQuantityChange(1)}
+                                                className="bag-quantity-button"
+                                                disabled={drawerQuantity >= Math.min(10, getDrawerSizeStock())}
+                                            >
+                                                <Plus size={14} />
+                                            </button>
+                                        </div>
+                                        <span className="bag-quantity-limit">
+                                            Max: {Math.min(10, getDrawerSizeStock())}
+                                        </span>
+                                    </div>
+
+                                    {drawerSize && getDrawerSizeStock() <= 5 && (
+                                        <p className="bag-stock-warning">
+                                            Only {getDrawerSizeStock()} left in stock!
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bag-drawer-summary">
+                                <div className="bag-subtotal">
+                                    <span>Subtotal:</span>
+                                    <span>£{(product.price * drawerQuantity).toFixed(2)}</span>
+                                </div>
+                                <p className="bag-delivery-note">
+                                    {(product.price * drawerQuantity) >= 50
+                                        ? "Free delivery included!"
+                                        : `Add £${(50 - (product.price * drawerQuantity)).toFixed(2)} for free delivery`
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bag-drawer-actions">
+                            <button className="continue-shopping-btn" onClick={closeBagDrawer}>
+                                Continue Shopping
+                            </button>
+                            <button className="proceed-checkout-btn" onClick={handleProceedToCheckout}>
+                                Proceed to Checkout
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+
             {/* Fullscreen Modal */}
             {isFullscreen && (
                 <div className="fullscreen-modal" onClick={closeFullscreen}>
                     <div className="fullscreen-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="close-btn" onClick={closeFullscreen}>
-                            <X size={24} />
+                        <button className="close-btn" onClick={closeFullscreen} style={{ background: 'transparent', width: '80px' }}>
+                            <X size={30} />
                         </button>
 
                         <div className="fullscreen-image-container">
@@ -480,7 +656,7 @@ const ProductDetails = ({ productId = 1 }) => {
                             </div>
 
                             <div className="fullscreen-zoom-controls">
-                                <button onClick={toggleZoom}>
+                                <button onClick={toggleZoom} style={{ background: 'transparent' }}>
                                     {isZoomed ? <ZoomOut size={24} /> : <ZoomIn size={24} />}
                                 </button>
                             </div>
@@ -585,6 +761,7 @@ const ProductDetails = ({ productId = 1 }) => {
                             </div>
                         </div>
                     )}
+
 
                     {activeTab === 'reviews' && (
                         <div className="reviews-content">
