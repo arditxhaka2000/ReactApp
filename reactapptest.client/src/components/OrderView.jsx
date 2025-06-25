@@ -1,4 +1,4 @@
-﻿// OrderView.jsx
+﻿// OrderView.jsx - Fixed Version
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package, Truck, CheckCircle, Clock, MapPin, CreditCard, RotateCcw, Mail, Phone } from 'lucide-react';
@@ -77,6 +77,7 @@ const OrderView = () => {
     };
 
     const formatDate = (dateString) => {
+        if (!dateString) return '';
         return new Date(dateString).toLocaleDateString('en-GB', {
             day: 'numeric',
             month: 'long',
@@ -87,10 +88,27 @@ const OrderView = () => {
     };
 
     const getTrackingSteps = () => {
+        if (!order) return [];
+
         const steps = [
-            { key: 'processing', label: 'Order Confirmed', completed: true },
-            { key: 'shipped', label: 'Shipped', completed: order?.status?.toLowerCase() === 'shipped' || order?.status?.toLowerCase() === 'delivered' },
-            { key: 'delivered', label: 'Delivered', completed: order?.status?.toLowerCase() === 'delivered' }
+            {
+                key: 'processing',
+                label: 'Order Confirmed',
+                completed: true,
+                date: order.orderDate
+            },
+            {
+                key: 'shipped',
+                label: 'Shipped',
+                completed: ['shipped', 'delivered'].includes(order.status?.toLowerCase()),
+                date: order.shippedDate
+            },
+            {
+                key: 'delivered',
+                label: 'Delivered',
+                completed: order.status?.toLowerCase() === 'delivered',
+                date: order.deliveredDate
+            }
         ];
         return steps;
     };
@@ -153,15 +171,16 @@ const OrderView = () => {
                         {getTrackingSteps().map((step, index) => (
                             <div key={step.key} className={`tracking-step ${step.completed ? 'completed' : ''}`}>
                                 <div className="step-indicator">
-                                    {step.completed ? <CheckCircle size={24} /> : <div className="step-circle"></div>}
+                                    {step.completed ? (
+                                        <CheckCircle size={24} />
+                                    ) : (
+                                        <div className="step-circle"></div>
+                                    )}
                                 </div>
                                 <div className="step-content">
                                     <h4>{step.label}</h4>
-                                    {step.key === 'shipped' && order.shippedDate && (
-                                        <p>{formatDate(order.shippedDate)}</p>
-                                    )}
-                                    {step.key === 'delivered' && order.deliveredDate && (
-                                        <p>{formatDate(order.deliveredDate)}</p>
+                                    {step.date && step.completed && (
+                                        <p>{formatDate(step.date)}</p>
                                     )}
                                 </div>
                                 {index < getTrackingSteps().length - 1 && (
@@ -190,21 +209,28 @@ const OrderView = () => {
                         <h2>Order Items ({order.items?.length || 0})</h2>
                         <div className="order-items">
                             {order.items?.map((item, index) => (
-                                <div key={index} className="order-item">
+                                <div key={item.id || index} className="order-item">
                                     <div className="item-image">
                                         <img
                                             src={item.imageUrl || '/api/placeholder/80/100'}
-                                            alt={item.productName}
+                                            alt={item.productName || 'Product'}
+                                            onError={(e) => {
+                                                e.target.src = '/api/placeholder/80/100';
+                                            }}
                                         />
                                     </div>
                                     <div className="item-details">
-                                        <h4>{item.productName}</h4>
+                                        <h4>{item.productName || 'Unknown Product'}</h4>
                                         {item.productColor && <p>Color: {item.productColor}</p>}
-                                        <p>Size: {item.sizeName}</p>
-                                        <p>Quantity: {item.quantity}</p>
+                                        {item.sizeName && <p>Size: {item.sizeName}</p>}
+                                        <p>Quantity: {item.quantity || 1}</p>
                                         <div className="item-pricing">
-                                            <span className="unit-price">£{item.unitPrice.toFixed(2)} each</span>
-                                            <span className="total-price">£{item.totalPrice.toFixed(2)}</span>
+                                            <span className="unit-price">
+                                                £{(item.unitPrice || 0).toFixed(2)} each
+                                            </span>
+                                            <span className="total-price">
+                                                £{(item.totalPrice || item.unitPrice * item.quantity || 0).toFixed(2)}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -215,19 +241,24 @@ const OrderView = () => {
                         <div className="order-summary">
                             <div className="summary-line">
                                 <span>Subtotal:</span>
-                                <span>£{order.subtotal.toFixed(2)}</span>
+                                <span>£{(order.subtotal || 0).toFixed(2)}</span>
                             </div>
                             <div className="summary-line">
                                 <span>Shipping:</span>
-                                <span>{order.shippingCost === 0 ? 'Free' : `£${order.shippingCost.toFixed(2)}`}</span>
+                                <span>
+                                    {(order.shippingCost || 0) === 0
+                                        ? 'Free'
+                                        : `£${order.shippingCost.toFixed(2)}`
+                                    }
+                                </span>
                             </div>
-                            {order.discount > 0 && (
+                            {order.discount && order.discount > 0 && (
                                 <div className="summary-line discount">
                                     <span>Discount:</span>
                                     <span>-£{order.discount.toFixed(2)}</span>
                                 </div>
                             )}
-                            {order.tax > 0 && (
+                            {order.tax && order.tax > 0 && (
                                 <div className="summary-line">
                                     <span>Tax:</span>
                                     <span>£{order.tax.toFixed(2)}</span>
@@ -235,7 +266,7 @@ const OrderView = () => {
                             )}
                             <div className="summary-line total">
                                 <span>Total:</span>
-                                <span>£{order.total.toFixed(2)}</span>
+                                <span>£{(order.total || 0).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -245,13 +276,15 @@ const OrderView = () => {
                         {/* Customer Information */}
                         <div className="info-section">
                             <h3>Customer Information</h3>
-                            <div className="info-item">
-                                <Mail size={16} />
-                                <div>
-                                    <p className="info-label">Email</p>
-                                    <p className="info-value">{order.customerEmail}</p>
+                            {order.customerEmail && (
+                                <div className="info-item">
+                                    <Mail size={16} />
+                                    <div>
+                                        <p className="info-label">Email</p>
+                                        <p className="info-value">{order.customerEmail}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                             {order.shippingAddress?.phone && (
                                 <div className="info-item">
                                     <Phone size={16} />
@@ -264,22 +297,40 @@ const OrderView = () => {
                         </div>
 
                         {/* Shipping Address */}
-                        <div className="info-section">
-                            <h3>
-                                <MapPin size={18} />
-                                Shipping Address
-                            </h3>
-                            <div className="address-details">
-                                <p>{order.shippingAddress?.firstName} {order.shippingAddress?.lastName}</p>
-                                <p>{order.shippingAddress?.addressLine1}</p>
-                                {order.shippingAddress?.addressLine2 && (
-                                    <p>{order.shippingAddress.addressLine2}</p>
-                                )}
-                                <p>{order.shippingAddress?.city}, {order.shippingAddress?.state}</p>
-                                <p>{order.shippingAddress?.postalCode}</p>
-                                <p>{order.shippingAddress?.country}</p>
+                        {order.shippingAddress && (
+                            <div className="info-section">
+                                <h3>
+                                    <MapPin size={18} />
+                                    Shipping Address
+                                </h3>
+                                <div className="address-details">
+                                    {(order.shippingAddress.firstName || order.shippingAddress.lastName) && (
+                                        <p>
+                                            {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                                        </p>
+                                    )}
+                                    {order.shippingAddress.addressLine1 && (
+                                        <p>{order.shippingAddress.addressLine1}</p>
+                                    )}
+                                    {order.shippingAddress.addressLine2 && (
+                                        <p>{order.shippingAddress.addressLine2}</p>
+                                    )}
+                                    {(order.shippingAddress.city || order.shippingAddress.state) && (
+                                        <p>
+                                            {order.shippingAddress.city}
+                                            {order.shippingAddress.city && order.shippingAddress.state && ', '}
+                                            {order.shippingAddress.state}
+                                        </p>
+                                    )}
+                                    {order.shippingAddress.postalCode && (
+                                        <p>{order.shippingAddress.postalCode}</p>
+                                    )}
+                                    {order.shippingAddress.country && (
+                                        <p>{order.shippingAddress.country}</p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Payment Information */}
                         <div className="info-section">
@@ -287,14 +338,16 @@ const OrderView = () => {
                                 <CreditCard size={18} />
                                 Payment Information
                             </h3>
-                            <div className="payment-status">
-                                <span
-                                    className="payment-badge"
-                                    style={{ backgroundColor: getPaymentStatusColor(order.paymentStatus) }}
-                                >
-                                    {order.paymentStatus}
-                                </span>
-                            </div>
+                            {order.paymentStatus && (
+                                <div className="payment-status">
+                                    <span
+                                        className="payment-badge"
+                                        style={{ backgroundColor: getPaymentStatusColor(order.paymentStatus) }}
+                                    >
+                                        {order.paymentStatus}
+                                    </span>
+                                </div>
+                            )}
                             <p className="payment-method">Payment Method: Card</p>
                         </div>
 
