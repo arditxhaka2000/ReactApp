@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 import { Plus, Edit2, Trash2, Search, Filter, X, Eye, LogOut, Package, Users, ShoppingBag, BarChart3 } from 'lucide-react';
 import '../components/AdminPage.css';
 
 const AdminPage = () => {
-    const [user, setUser] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [authInProgress, setAuthInProgress] = useState(false); // Prevent duplicate calls
+    const navigate = useNavigate();
+    const { user, isAuthenticated, loading, logout, isAdmin, checkAuthStatus } = useAuth();
+
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [collections, setCollections] = useState([]);
@@ -17,69 +19,28 @@ const AdminPage = () => {
     const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
-        checkAuthentication();
+        // Force auth check when component mounts
+        checkAuthStatus();
     }, []);
 
     useEffect(() => {
-        if (user && currentView === 'products') {
-            loadProducts();
-            loadCategories();
-            loadCollections();
-        }
-    }, [user, currentView]);
-
-    const checkAuthentication = async () => {
-        // Prevent duplicate calls (fixes StrictMode issue)
-        if (authInProgress) {
-            console.log('Auth check already in progress, skipping...');
-            return;
-        }
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setIsLoading(false);
-            return;
-        }
-
-        setAuthInProgress(true);
-        console.log('Starting auth check...'); // Debug log
-
-        try {
-            const response = await fetch('https://localhost:7100/api/auth/me', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const userData = await response.json();
-                console.log('Auth response:', userData); // Debug log
-
-                if (!userData.isAdmin && userData.role !== 'Admin' && userData.role !== 'SuperAdmin') {
-                    console.log('User is not admin, redirecting...');
-                    localStorage.removeItem('token');
-                    setIsLoading(false);
-                    setAuthInProgress(false);
-                    return;
-                }
-
-                setUser(userData);
-            } else {
-                console.log('Auth failed, removing token');
-                localStorage.removeItem('token');
+        // Check authentication and admin status
+        if (!loading) {
+            if (!isAuthenticated) {
+                navigate('/login');
+                return;
             }
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            localStorage.removeItem('token');
-        } finally {
-            setIsLoading(false);
-            setAuthInProgress(false);
+
+            if (!isAdmin()) {
+                console.log('User is not admin:', user);
+                navigate('/');
+                return;
+            }
         }
-    };
+    }, [loading, isAuthenticated, user, navigate]);
 
     useEffect(() => {
-        if (user && currentView === 'products') {
+        if (user && isAdmin() && currentView === 'products') {
             loadProducts();
             loadCategories();
             loadCollections();
@@ -111,7 +72,7 @@ const AdminPage = () => {
     const loadCategories = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('https://localhost:7100/api/categories', {
+            const response = await fetch('https://localhost:7100/api/category', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -147,16 +108,8 @@ const AdminPage = () => {
     };
 
     const handleLogout = () => {
-        // Clear all possible tokens and auth data
-        localStorage.removeItem('token');
-        localStorage.removeItem('adminToken');
-        sessionStorage.clear();
-
-        // Reset component state
-        setUser(null);
-
-        // Force redirect to main login page
-        window.location.href = '/login';
+        logout(); // Use AuthContext logout
+        navigate('/login');
     };
 
     const handleDeleteProduct = async (productId) => {
@@ -190,9 +143,8 @@ const AdminPage = () => {
         return matchesSearch && matchesCategory;
     });
 
-    console.log('AdminPage render - isLoading:', isLoading, 'user:', user, 'authInProgress:', authInProgress); // Debug log
-
-    if (isLoading) {
+    // Show loading spinner while checking authentication
+    if (loading) {
         return (
             <div className="loading-spinner">
                 <div className="spinner"></div>
@@ -200,12 +152,14 @@ const AdminPage = () => {
         );
     }
 
-    if (!user) {
-        return <LoginForm onLogin={checkAuthentication} />;
+    // Show login form if not authenticated
+    if (!isAuthenticated) {
+        return <LoginForm onLogin={() => navigate('/login')} />;
     }
 
-    if (!user.isAdmin && user.role !== 'Admin' && user.role !== 'SuperAdmin') {
-        return <AccessDenied />;
+    // Show access denied if not admin
+    if (!isAdmin()) {
+        return <AccessDenied onBack={() => navigate('/')} />;
     }
 
     return (
@@ -219,6 +173,7 @@ const AdminPage = () => {
                         </div>
                         <div className="user-section">
                             <span className="user-name">Welcome, {user.firstName}</span>
+                            <span className="user-role">({user.role})</span>
                             <button onClick={handleLogout} className="logout-btn">
                                 <LogOut className="nav-icon" />
                                 <span>Logout</span>
@@ -315,7 +270,7 @@ const AdminPage = () => {
     );
 };
 
-const AccessDenied = () => (
+const AccessDenied = ({ onBack }) => (
     <div className="login-container">
         <div className="login-card">
             <div className="login-header">
@@ -326,103 +281,32 @@ const AccessDenied = () => (
                 </p>
             </div>
             <button
-                onClick={() => {
-                    localStorage.removeItem('token');
-                    window.location.reload();
-                }}
+                onClick={onBack}
                 className="submit-btn"
             >
-                Back to Login
+                Back to Home
             </button>
         </div>
     </div>
 );
 
-const LoginForm = ({ onLogin }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
-
-        try {
-            const response = await fetch('https://localhost:7100/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                onLogin();
-            } else {
-                setError(data.message || 'Login failed');
-            }
-        } catch (error) {
-            setError('Login failed. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div className="login-container">
-            <div className="login-card">
-                <div className="login-header">
-                    <Package className="logo" />
-                    <h2 className="title">Admin Login</h2>
-                    <p className="subtitle">Sign in to access the admin panel</p>
-                </div>
-
-                <div className="login-form">
-                    <div className="form-group">
-                        <label className="form-label">Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="form-input"
-                            required
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="form-input"
-                            required
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="error-message">
-                            {error}
-                        </div>
-                    )}
-
-                    <button
-                        onClick={handleLogin}
-                        disabled={isLoading}
-                        className="submit-btn"
-                    >
-                        {isLoading ? 'Signing in...' : 'Sign In'}
-                    </button>
-                </div>
+const LoginForm = ({ onLogin }) => (
+    <div className="login-container">
+        <div className="login-card">
+            <div className="login-header">
+                <Package className="logo" />
+                <h2 className="title">Authentication Required</h2>
+                <p className="subtitle">Please log in to access the admin panel</p>
             </div>
+            <button
+                onClick={onLogin}
+                className="submit-btn"
+            >
+                Go to Login
+            </button>
         </div>
-    );
-};
+    </div>
+);
 
 const Dashboard = () => (
     <div>

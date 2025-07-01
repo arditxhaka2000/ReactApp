@@ -1,4 +1,4 @@
-// AuthContext.jsx - Authentication Context Provider
+// AuthContext.jsx - Fixed Authentication Context Provider
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -23,7 +23,8 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuthStatus = async () => {
         try {
-            const token = localStorage.getItem('authToken');
+            // Use consistent token key
+            const token = localStorage.getItem('token');
             if (token) {
                 const response = await fetch('https://localhost:7100/api/auth/me', {
                     headers: {
@@ -36,16 +37,24 @@ export const AuthProvider = ({ children }) => {
                     setUser(userData);
                     setIsAuthenticated(true);
                 } else {
-                    // Invalid token, remove it
-                    localStorage.removeItem('authToken');
+                    // Invalid token, clean up all possible tokens
+                    clearAllTokens();
                 }
             }
         } catch (error) {
             console.error('Auth check failed:', error);
-            localStorage.removeItem('authToken');
+            clearAllTokens();
         } finally {
             setLoading(false);
         }
+    };
+
+    const clearAllTokens = () => {
+        // Clear all possible token variations
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('adminToken');
+        sessionStorage.clear();
     };
 
     const login = async (email, password) => {
@@ -60,10 +69,15 @@ export const AuthProvider = ({ children }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                localStorage.setItem('authToken', data.token);
+
+                // Clear any existing tokens first
+                clearAllTokens();
+
+                // Store with consistent key
+                localStorage.setItem('token', data.token);
                 setUser(data.user);
                 setIsAuthenticated(true);
-                return { success: true };
+                return { success: true, user: data.user };
             } else {
                 const error = await response.json();
                 return { success: false, message: error.message };
@@ -85,10 +99,15 @@ export const AuthProvider = ({ children }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                localStorage.setItem('authToken', data.token);
+
+                // Clear any existing tokens first
+                clearAllTokens();
+
+                // Store with consistent key
+                localStorage.setItem('token', data.token);
                 setUser(data.user);
                 setIsAuthenticated(true);
-                return { success: true };
+                return { success: true, user: data.user };
             } else {
                 const error = await response.json();
                 return { success: false, message: error.message };
@@ -99,14 +118,14 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem('authToken');
+        clearAllTokens();
         setUser(null);
         setIsAuthenticated(false);
     };
 
     const updateProfile = async (profileData) => {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             const response = await fetch('https://localhost:7100/api/auth/profile', {
                 method: 'PUT',
                 headers: {
@@ -129,6 +148,11 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    // Helper function to check if current user is admin
+    const isAdmin = () => {
+        return user && (user.isAdmin || user.role === 'Admin' || user.role === 'SuperAdmin');
+    };
+
     const value = {
         user,
         isAuthenticated,
@@ -137,7 +161,9 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateProfile,
-        checkAuthStatus
+        checkAuthStatus,
+        isAdmin,
+        clearAllTokens
     };
 
     return (

@@ -19,7 +19,7 @@ const UserDashboard = () => {
 
     const fetchUserData = async () => {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             // Fetch user orders
             const ordersResponse = await fetch('https://localhost:7100/api/users/orders', {
                 headers: {

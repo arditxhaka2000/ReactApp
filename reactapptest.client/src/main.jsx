@@ -1,9 +1,10 @@
-﻿// Update your main.jsx routing:
+﻿// Updated main.jsx with proper routing and authentication
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import AdminProtectedRoute from './AdminProtectedRoute.jsx';
 import ProductListingPage from './page/products';
 import ProductDetails from './page/details';
 import './index.css';
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')).render(
             <BrowserRouter>
                 <Layout>
                     <Routes>
+                        {/* Public routes */}
                         <Route path="/" element={<App />} />
                         <Route path="/app" element={<App />} />
                         <Route path="/products" element={<ProductListingPage />} />
@@ -32,11 +34,13 @@ createRoot(document.getElementById('root')).render(
                         <Route path="/category" element={<Categories />} />
                         <Route path="/collections" element={<Collections />} />
                         <Route path="/cart" element={<Cart />} />
+
+                        {/* Authentication routes */}
                         <Route path="/login" element={<LoginRegisterPage />} />
                         <Route path="/register" element={<LoginRegisterPage />} />
                         <Route path="/auth" element={<LoginRegisterPage />} />
 
-                        {/* Protected routes */}
+                        {/* Protected routes for authenticated users */}
                         <Route
                             path="/checkout"
                             element={
@@ -70,8 +74,26 @@ createRoot(document.getElementById('root')).render(
                             }
                         />
 
-                        {/* Admin route - no extra protection needed since AdminPage handles it */}
-                        <Route path="/admin" element={<AdminDashboard />} />
+                        {/* Admin-only protected route */}
+                        <Route
+                            path="/admin"
+                            element={
+                                <AdminProtectedRoute>
+                                    <AdminDashboard />
+                                </AdminProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/*"
+                            element={
+                                <AdminProtectedRoute>
+                                    <AdminDashboard />
+                                </AdminProtectedRoute>
+                            }
+                        />
+
+                        {/* Catch-all redirect */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </Layout>
             </BrowserRouter>
