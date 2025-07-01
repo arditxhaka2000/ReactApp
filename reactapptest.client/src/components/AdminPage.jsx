@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { Plus, Edit2, Trash2, Search, Filter, X, Eye, LogOut, Package, Users, ShoppingBag, BarChart3 } from 'lucide-react';
@@ -17,6 +17,12 @@ const AdminPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [showFilters, setShowFilters] = useState(false);
+
+    // Dashboard data
+    const [dashboardStats, setDashboardStats] = useState(null);
+    const [usersData, setUsersData] = useState([]);
+    const [ordersData, setOrdersData] = useState([]);
+    const [statsLoading, setStatsLoading] = useState(false);
 
     useEffect(() => {
         // Force auth check when component mounts
@@ -40,12 +46,113 @@ const AdminPage = () => {
     }, [loading, isAuthenticated, user, navigate]);
 
     useEffect(() => {
-        if (user && isAdmin() && currentView === 'products') {
-            loadProducts();
-            loadCategories();
-            loadCollections();
+        if (user && isAdmin()) {
+            if (currentView === 'dashboard') {
+                loadDashboardStats();
+            } else if (currentView === 'products') {
+                loadProducts();
+                loadCategories();
+                loadCollections();
+            } else if (currentView === 'users') {
+                loadUsersData();
+            } else if (currentView === 'orders') {
+                loadOrdersData();
+            }
         }
     }, [user, currentView]);
+
+    const loadDashboardStats = async () => {
+        setStatsLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('https://localhost:7100/api/adminstats/dashboard', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setDashboardStats(data);
+            } else if (response.status === 403) {
+                alert('Access denied. Admin privileges required.');
+                handleLogout();
+            }
+        } catch (error) {
+            console.error('Failed to load dashboard stats:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
+    const loadUsersData = async () => {
+        setStatsLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('https://localhost:7100/api/adminstats/users', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUsersData(data);
+            }
+        } catch (error) {
+            console.error('Failed to load users data:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
+    const loadOrdersData = async () => {
+        setStatsLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('https://localhost:7100/api/adminstats/orders', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setOrdersData(data);
+            }
+        } catch (error) {
+            console.error('Failed to load orders data:', error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
+    const updateOrderStatus = async (orderId, newStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`https://localhost:7100/api/adminstats/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (response.ok) {
+                loadOrdersData(); // Refresh orders data
+                alert('Order status updated successfully');
+            } else {
+                alert('Failed to update order status');
+            }
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            alert('Failed to update order status');
+        }
+    };
 
     const loadProducts = async () => {
         try {
@@ -72,7 +179,7 @@ const AdminPage = () => {
     const loadCategories = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('https://localhost:7100/api/category', {
+            const response = await fetch('https://localhost:7100/api/categories', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -228,7 +335,7 @@ const AdminPage = () => {
                 </nav>
 
                 <main className="admin-main">
-                    {currentView === 'dashboard' && <Dashboard />}
+                    {currentView === 'dashboard' && <Dashboard stats={dashboardStats} loading={statsLoading} />}
                     {currentView === 'products' && (
                         <ProductsView
                             products={filteredProducts}
@@ -245,8 +352,8 @@ const AdminPage = () => {
                             onAdd={() => setIsModalOpen(true)}
                         />
                     )}
-                    {currentView === 'orders' && <OrdersView />}
-                    {currentView === 'users' && <UsersView />}
+                    {currentView === 'orders' && <OrdersView orders={ordersData} loading={statsLoading} onUpdateStatus={updateOrderStatus} />}
+                    {currentView === 'users' && <UsersView users={usersData} loading={statsLoading} />}
                 </main>
             </div>
 
@@ -308,49 +415,150 @@ const LoginForm = ({ onLogin }) => (
     </div>
 );
 
-const Dashboard = () => (
-    <div>
-        <h2 className="dashboard-title">Dashboard</h2>
-        <div className="dashboard-grid">
-            <div className="dashboard-card">
-                <div className="card-content">
-                    <Package className="card-icon blue" />
-                    <div className="card-text">
-                        <p className="card-label">Total Products</p>
-                        <p className="card-value">0</p>
+// ... (rest of the components remain the same: Dashboard, ProductsView, ProductModal, OrdersView, UsersView)
+
+const Dashboard = ({ stats, loading }) => {
+    if (loading) {
+        return (
+            <div className="loading-spinner">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
+    if (!stats) {
+        return (
+            <div>
+                <h2 className="dashboard-title">Dashboard</h2>
+                <p>Loading dashboard data...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            <h2 className="dashboard-title">Dashboard</h2>
+
+            {/* Main Stats Cards */}
+            <div className="dashboard-grid">
+                <div className="dashboard-card">
+                    <div className="card-content">
+                        <Package className="card-icon blue" />
+                        <div className="card-text">
+                            <p className="card-label">Total Products</p>
+                            <p className="card-value">{stats.totalProducts}</p>
+                            <p className="card-sublabel">{stats.activeProducts} active</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="dashboard-card">
+                    <div className="card-content">
+                        <ShoppingBag className="card-icon green" />
+                        <div className="card-text">
+                            <p className="card-label">Total Orders</p>
+                            <p className="card-value">{stats.totalOrders}</p>
+                            <p className="card-sublabel">{stats.pendingOrders} pending</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="dashboard-card">
+                    <div className="card-content">
+                        <Users className="card-icon purple" />
+                        <div className="card-text">
+                            <p className="card-label">Total Users</p>
+                            <p className="card-value">{stats.totalUsers}</p>
+                            <p className="card-sublabel">{stats.totalCustomers} customers</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="dashboard-card">
+                    <div className="card-content">
+                        <BarChart3 className="card-icon orange" />
+                        <div className="card-text">
+                            <p className="card-label">Total Revenue</p>
+                            <p className="card-value">${stats.totalRevenue.toFixed(2)}</p>
+                            <p className="card-sublabel">${stats.monthlyRevenue.toFixed(2)} this month</p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div className="dashboard-card">
-                <div className="card-content">
-                    <ShoppingBag className="card-icon green" />
-                    <div className="card-text">
-                        <p className="card-label">Total Orders</p>
-                        <p className="card-value">0</p>
+
+            {/* Additional Stats */}
+            <div className="dashboard-section">
+                <h3 className="section-title">Recent Activity</h3>
+                <div className="stats-grid">
+                    <div className="stat-item">
+                        <span className="stat-label">Recent Orders (30 days)</span>
+                        <span className="stat-value">{stats.recentOrdersCount}</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-label">Completed Orders</span>
+                        <span className="stat-value">{stats.completedOrders}</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-label">Low Stock Items</span>
+                        <span className="stat-value alert">{stats.lowStockProducts}</span>
                     </div>
                 </div>
             </div>
-            <div className="dashboard-card">
-                <div className="card-content">
-                    <Users className="card-icon purple" />
-                    <div className="card-text">
-                        <p className="card-label">Total Users</p>
-                        <p className="card-value">0</p>
+
+            {/* Top Products */}
+            {stats.topProducts && stats.topProducts.length > 0 && (
+                <div className="dashboard-section">
+                    <h3 className="section-title">Top Selling Products (Last 30 Days)</h3>
+                    <div className="top-products-list">
+                        {stats.topProducts.map((product, index) => (
+                            <div key={product.productId} className="top-product-item">
+                                <span className="product-rank">#{index + 1}</span>
+                                <div className="product-info">
+                                    <span className="product-name">{product.productName}</span>
+                                    <span className="product-stats">
+                                        {product.totalSold} sold • ${product.revenue.toFixed(2)} revenue
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </div>
-            <div className="dashboard-card">
-                <div className="card-content">
-                    <BarChart3 className="card-icon orange" />
-                    <div className="card-text">
-                        <p className="card-label">Revenue</p>
-                        <p className="card-value">$0</p>
+            )}
+
+            {/* Recent Orders */}
+            {stats.recentOrders && stats.recentOrders.length > 0 && (
+                <div className="dashboard-section">
+                    <h3 className="section-title">Recent Orders</h3>
+                    <div className="recent-orders-table">
+                        <table className="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.recentOrders.map(order => (
+                                    <tr key={order.id}>
+                                        <td>{order.orderNumber}</td>
+                                        <td>{order.customerName}</td>
+                                        <td>${order.totalAmount.toFixed(2)}</td>
+                                        <td>
+                                            <span className={`status-badge ${order.status.toLowerCase()}`}>
+                                                {order.status}
+                                            </span>
+                                        </td>
+                                        <td>{new Date(order.orderDate).toLocaleDateString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
-    </div>
-);
+    );
+};
 
 const ProductsView = ({
     products,
@@ -690,32 +898,6 @@ const ProductModal = ({ product, categories, collections, onClose, onSave }) => 
                             <div className="form-checkbox-group">
                                 <input
                                     type="checkbox"
-                                    id="inStock"
-                                    checked={formData.inStock}
-                                    onChange={(e) => setFormData({ ...formData, inStock: e.target.checked })}
-                                    className="form-checkbox"
-                                />
-                                <label htmlFor="inStock" className="form-checkbox-label">
-                                    In Stock
-                                </label>
-                            </div>
-
-                            <div className="form-checkbox-group">
-                                <input
-                                    type="checkbox"
-                                    id="isFeatured"
-                                    checked={formData.isFeatured}
-                                    onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                                    className="form-checkbox"
-                                />
-                                <label htmlFor="isFeatured" className="form-checkbox-label">
-                                    Featured
-                                </label>
-                            </div>
-
-                            <div className="form-checkbox-group">
-                                <input
-                                    type="checkbox"
                                     id="isNewArrival"
                                     checked={formData.isNewArrival}
                                     onChange={(e) => setFormData({ ...formData, isNewArrival: e.target.checked })}
@@ -763,26 +945,388 @@ const ProductModal = ({ product, categories, collections, onClose, onSave }) => 
     );
 };
 
-const OrdersView = () => (
-    <div>
-        <h2 className="dashboard-title">Orders</h2>
-        <div className="placeholder-content">
-            <ShoppingBag className="icon" />
-            <h3 className="title">Orders Management</h3>
-            <p className="description">Order management functionality coming soon.</p>
-        </div>
-    </div>
-);
+const OrdersView = ({ orders, loading, onUpdateStatus }) => {
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [statusFilter, setStatusFilter] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
-const UsersView = () => (
-    <div>
-        <h2 className="dashboard-title">Users</h2>
-        <div className="placeholder-content">
-            <Users className="icon" />
-            <h3 className="title">User Management</h3>
-            <p className="description">User management functionality coming soon.</p>
+    if (loading) {
+        return (
+            <div className="loading-spinner">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
+    const filteredOrders = orders.filter(order => {
+        const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = !statusFilter || order.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    const handleStatusChange = (orderId, newStatus) => {
+        if (confirm(`Are you sure you want to change the order status to ${newStatus}?`)) {
+            onUpdateStatus(orderId, newStatus);
+        }
+    };
+
+    const getStatusOptions = (currentStatus) => {
+        const allStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+        return allStatuses.filter(status => status !== currentStatus);
+    };
+
+    return (
+        <div>
+            <div className="orders-header">
+                <h2 className="orders-title">Orders Management</h2>
+                <div className="orders-stats">
+                    <span className="stat-badge">Total: {orders.length}</span>
+                    <span className="stat-badge pending">
+                        Pending: {orders.filter(o => o.status === 'Pending').length}
+                    </span>
+                    <span className="stat-badge processing">
+                        Processing: {orders.filter(o => o.status === 'Processing').length}
+                    </span>
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className="orders-filters">
+                <div className="filter-row">
+                    <div className="search-container">
+                        <Search className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search orders..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-input"
+                        />
+                    </div>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Processing">Processing</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Orders Table */}
+            <div className="orders-table-container">
+                <table className="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredOrders.map((order) => (
+                            <tr key={order.id}>
+                                <td>
+                                    <button
+                                        onClick={() => setSelectedOrder(order)}
+                                        className="order-number-btn"
+                                    >
+                                        {order.orderNumber}
+                                    </button>
+                                </td>
+                                <td>
+                                    <div className="customer-info">
+                                        <div className="customer-name">{order.customerName}</div>
+                                        <div className="customer-email">{order.customerEmail}</div>
+                                    </div>
+                                </td>
+                                <td>{order.itemCount} items</td>
+                                <td className="order-total">${order.totalAmount.toFixed(2)}</td>
+                                <td>
+                                    <span className={`status-badge ${order.status.toLowerCase()}`}>
+                                        {order.status}
+                                    </span>
+                                </td>
+                                <td>{new Date(order.orderDate).toLocaleDateString()}</td>
+                                <td>
+                                    <select
+                                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                        className="status-select"
+                                        defaultValue=""
+                                    >
+                                        <option value="" disabled>Change Status</option>
+                                        {getStatusOptions(order.status).map(status => (
+                                            <option key={status} value={status}>{status}</option>
+                                        ))}
+                                    </select>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                {filteredOrders.length === 0 && (
+                    <div className="empty-state">
+                        <ShoppingBag className="icon" />
+                        <h3 className="title">No orders found</h3>
+                        <p className="description">No orders match your current filters.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Order Details Modal */}
+            {selectedOrder && (
+                <OrderDetailsModal
+                    order={selectedOrder}
+                    onClose={() => setSelectedOrder(null)}
+                    onUpdateStatus={onUpdateStatus}
+                />
+            )}
         </div>
-    </div>
-);
+    );
+};
+
+const OrderDetailsModal = ({ order, onClose, onUpdateStatus }) => {
+    return (
+        <div className="modal-overlay">
+            <div className="modal-container large">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h3 className="modal-title">Order Details - {order.orderNumber}</h3>
+                        <button onClick={onClose} className="modal-close">
+                            <X className="icon" />
+                        </button>
+                    </div>
+
+                    <div className="order-details-content">
+                        <div className="order-summary">
+                            <div className="summary-row">
+                                <span className="label">Customer:</span>
+                                <span className="value">{order.customerName}</span>
+                            </div>
+                            <div className="summary-row">
+                                <span className="label">Email:</span>
+                                <span className="value">{order.customerEmail}</span>
+                            </div>
+                            <div className="summary-row">
+                                <span className="label">Order Date:</span>
+                                <span className="value">{new Date(order.orderDate).toLocaleString()}</span>
+                            </div>
+                            <div className="summary-row">
+                                <span className="label">Status:</span>
+                                <span className={`status-badge ${order.status.toLowerCase()}`}>
+                                    {order.status}
+                                </span>
+                            </div>
+                            <div className="summary-row">
+                                <span className="label">Shipping Address:</span>
+                                <span className="value">{order.shippingAddress}</span>
+                            </div>
+                        </div>
+
+                        <div className="order-items">
+                            <h4>Order Items</h4>
+                            <table className="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {order.items.map((item, index) => (
+                                        <tr key={index}>
+                                            <td>{item.productName}</td>
+                                            <td>{item.quantity}</td>
+                                            <td>${item.unitPrice.toFixed(2)}</td>
+                                            <td>${item.totalPrice.toFixed(2)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot>
+                                    <tr className="total-row">
+                                        <td colSpan="3"><strong>Total Amount:</strong></td>
+                                        <td><strong>${order.totalAmount.toFixed(2)}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const UsersView = ({ users, loading }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState('');
+    const [sortBy, setSortBy] = useState('createdAt');
+    const [sortOrder, setSortOrder] = useState('desc');
+
+    if (loading) {
+        return (
+            <div className="loading-spinner">
+                <div className="spinner"></div>
+            </div>
+        );
+    }
+
+    const filteredUsers = users.filter(user => {
+        const matchesSearch = user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesRole = !roleFilter || user.role === roleFilter;
+        return matchesSearch && matchesRole;
+    });
+
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+        let aValue = a[sortBy];
+        let bValue = b[sortBy];
+
+        if (sortBy === 'createdAt' || sortBy === 'lastLoginAt') {
+            aValue = new Date(aValue);
+            bValue = new Date(bValue);
+        }
+
+        if (sortOrder === 'asc') {
+            return aValue > bValue ? 1 : -1;
+        } else {
+            return aValue < bValue ? 1 : -1;
+        }
+    });
+
+    const totalCustomers = users.filter(u => u.role === 'Customer').length;
+    const totalAdmins = users.filter(u => u.isAdmin || u.role === 'Admin').length;
+    const activeUsers = users.filter(u => u.isActive).length;
+
+    return (
+        <div>
+            <div className="users-header">
+                <h2 className="users-title">Users Management</h2>
+                <div className="users-stats">
+                    <span className="stat-badge">Total: {users.length}</span>
+                    <span className="stat-badge customers">Customers: {totalCustomers}</span>
+                    <span className="stat-badge admins">Admins: {totalAdmins}</span>
+                    <span className="stat-badge active">Active: {activeUsers}</span>
+                </div>
+            </div>
+
+            {/* Filters and Search */}
+            <div className="users-filters">
+                <div className="filter-row">
+                    <div className="search-container">
+                        <Search className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-input"
+                        />
+                    </div>
+                    <select
+                        value={roleFilter}
+                        onChange={(e) => setRoleFilter(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="">All Roles</option>
+                        <option value="Customer">Customer</option>
+                        <option value="Admin">Admin</option>
+                        <option value="SuperAdmin">Super Admin</option>
+                    </select>
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="createdAt">Sort by Join Date</option>
+                        <option value="lastLoginAt">Sort by Last Login</option>
+                        <option value="firstName">Sort by Name</option>
+                        <option value="totalSpent">Sort by Total Spent</option>
+                        <option value="orderCount">Sort by Order Count</option>
+                    </select>
+                    <button
+                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                        className="sort-btn"
+                    >
+                        {sortOrder === 'asc' ? '↑' : '↓'}
+                    </button>
+                </div>
+            </div>
+
+            {/* Users Table */}
+            <div className="users-table-container">
+                <table className="users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Orders</th>
+                            <th>Total Spent</th>
+                            <th>Joined</th>
+                            <th>Last Login</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sortedUsers.map((user) => (
+                            <tr key={user.id}>
+                                <td>
+                                    <div className="user-info">
+                                        <div className="user-avatar">
+                                            {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                                        </div>
+                                        <div className="user-details">
+                                            <div className="user-name">
+                                                {user.firstName} {user.lastName}
+                                            </div>
+                                            <div className="user-email">{user.email}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span className={`role-badge ${user.role.toLowerCase()}`}>
+                                        {user.isAdmin ? 'Admin' : user.role}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span className={`status-badge ${user.isActive ? 'active' : 'inactive'}`}>
+                                        {user.isActive ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td className="user-orders">{user.orderCount}</td>
+                                <td className="user-spent">${user.totalSpent.toFixed(2)}</td>
+                                <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                                <td>{new Date(user.lastLoginAt).toLocaleDateString()}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                {sortedUsers.length === 0 && (
+                    <div className="empty-state">
+                        <Users className="icon" />
+                        <h3 className="title">No users found</h3>
+                        <p className="description">No users match your current filters.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export default AdminPage;

@@ -630,3 +630,316 @@
 .stat-label {
     color: #666 !important;
 }
+/* Admin Header Styles - Add these to your existing Header.css */
+
+/* Admin Panel Link in Desktop Navigation */
+.admin-panel-link {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+    .admin-panel-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .admin-panel-link:hover::before {
+        left: 100%;
+    }
+
+    .admin-panel-link:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4) !important;
+        background: linear-gradient(135deg, #6d28d9 0%, #9333ea 100%) !important;
+    }
+
+/* Admin Avatar Styles */
+.user-avatar.admin-avatar,
+.dropdown-user-avatar.admin-avatar,
+.mobile-user-avatar.admin-avatar {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+    border: 2px solid #fbbf24 !important;
+    position: relative;
+    animation: adminGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes adminGlow {
+    0% {
+        box-shadow: 0 0 5px rgba(124, 58, 237, 0.5);
+    }
+
+    100% {
+        box-shadow: 0 0 15px rgba(124, 58, 237, 0.8), 0 0 25px rgba(168, 85, 247, 0.4);
+    }
+}
+
+/* Admin Crown Icons */
+.admin-crown,
+.admin-crown-dropdown,
+.admin-crown-mobile {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    color: #fbbf24;
+    background: white;
+    border-radius: 50%;
+    padding: 1px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.admin-crown {
+    width: 14px;
+    height: 14px;
+}
+
+.admin-crown-dropdown {
+    width: 16px;
+    height: 16px;
+    top: -3px;
+    right: -3px;
+}
+
+.admin-crown-mobile {
+    width: 16px;
+    height: 16px;
+    top: -3px;
+    right: -3px;
+}
+
+/* Admin Badges */
+.admin-badge {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(124, 58, 237, 0.3);
+}
+
+.admin-role-badge {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(124, 58, 237, 0.3);
+}
+
+.mobile-admin-badge {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Admin Section in Dropdown */
+.dropdown-section.admin-section {
+    background: linear-gradient(135deg, #fef3ff 0%, #f3e8ff 100%);
+    border: 1px solid #d8b4fe;
+    margin: 0.5rem;
+    border-radius: 8px;
+    padding: 0;
+}
+
+.dropdown-item.admin-item {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    position: relative;
+    overflow: hidden;
+}
+
+    .dropdown-item.admin-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.3s;
+    }
+
+    .dropdown-item.admin-item:hover::before {
+        left: 100%;
+    }
+
+    .dropdown-item.admin-item:hover {
+        background: linear-gradient(135deg, #6d28d9 0%, #9333ea 100%) !important;
+        color: white !important;
+        transform: translateX(2px);
+    }
+
+.admin-access-badge {
+    background: #fbbf24;
+    color: #92400e;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: auto;
+}
+
+/* Mobile Admin Link */
+.mobile-admin-link {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    padding: 12px 0 !important;
+    margin: 8px 0 !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2) !important;
+    border: none !important;
+    position: relative;
+    overflow: hidden;
+}
+
+    .mobile-admin-link::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.4s;
+    }
+
+    .mobile-admin-link:hover::before {
+        left: 100%;
+    }
+
+    .mobile-admin-link:hover {
+        background: linear-gradient(135deg, #6d28d9 0%, #9333ea 100%) !important;
+        color: white !important;
+        transform: translateX(2px);
+    }
+
+.mobile-admin-access-badge {
+    background: #fbbf24;
+    color: #92400e;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Scrolled header admin adjustments */
+.site-header.scrolled .admin-panel-link,
+.site-headerMain .admin-panel-link {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+    color: white !important;
+}
+
+    .site-header.scrolled .admin-panel-link:hover,
+    .site-headerMain .admin-panel-link:hover {
+        background: linear-gradient(135deg, #6d28d9 0%, #9333ea 100%) !important;
+    }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .admin-panel-link {
+        display: none !important;
+    }
+
+    .admin-badge {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mobile-admin-link {
+        margin: 6px 0 !important;
+        padding: 10px 0 !important;
+    }
+
+    .mobile-admin-badge {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+    }
+
+    .admin-crown-mobile {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* Special effects for admin elements */
+@keyframes shimmer {
+    0% {
+        background-position: -200px 0;
+    }
+
+    100% {
+        background-position: 200px 0;
+    }
+}
+
+.admin-panel-link,
+.dropdown-item.admin-item,
+.mobile-admin-link {
+    background-size: 200px 100%;
+    background-image: linear-gradient( 135deg, #7c3aed 0%, #a855f7 25%, #7c3aed 50%, #a855f7 75%, #7c3aed 100% );
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+    /* Tooltip for admin panel link */
+    .admin-panel-link::after {
+        content: 'Access admin dashboard';
+        position: absolute;
+        bottom: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1f2937;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        z-index: 1000;
+    }
+
+    .admin-panel-link:hover::after {
+        opacity: 1;
+    }

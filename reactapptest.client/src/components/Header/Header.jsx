@@ -1,19 +1,19 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '../AuthContext'; // Add this import
-import { User, ShoppingCart, Menu, X, Package, Heart, Settings, LogOut } from 'lucide-react'; // Add more icons
+import { useAuth } from '../AuthContext';
+import { User, ShoppingCart, Menu, X, Package, Heart, Settings, LogOut, Shield, Crown } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [cartItemCount, setCartItemCount] = useState(0); // Add cart count
-    const [wishlistCount, setWishlistCount] = useState(0); // Add wishlist count
+    const [cartItemCount, setCartItemCount] = useState(0);
+    const [wishlistCount, setWishlistCount] = useState(0);
 
     const location = useLocation();
-    const navigate = useNavigate(); // Add navigate
-    const { user, isAuthenticated, logout } = useAuth(); // Add authentication
+    const navigate = useNavigate();
+    const { user, isAuthenticated, logout, isAdmin } = useAuth(); // Add isAdmin
 
     const isMainPage = location.pathname === '/';
 
@@ -49,7 +49,7 @@ const Header = () => {
             setCartItemCount(savedCart.reduce((total, item) => total + item.quantity, 0));
 
             // Load wishlist count from API
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             if (token) {
                 const wishlistResponse = await fetch('https://localhost:7100/api/users/wishlist', {
                     headers: {
@@ -107,16 +107,28 @@ const Header = () => {
                     <Link to="/products">Products</Link>
                     <Link to="/category">Categories</Link>
 
+                    {/* Admin Panel Access - Desktop */}
+                    {isAuthenticated && isAdmin() && (
+                        <Link to="/admin" className="admin-panel-link">
+                            <Shield size={18} />
+                            <span style={{ marginLeft: '5px' }}>Admin Panel</span>
+                        </Link>
+                    )}
+
                     {/* Updated User Dropdown */}
                     <div className="dropdown">
                         <div className="icon-link">
                             {isAuthenticated ? (
                                 <>
-                                    <div className="user-avatar">
+                                    <div className={`user-avatar ${isAdmin() ? 'admin-avatar' : ''}`}>
+                                        {isAdmin() && <Crown size={12} className="admin-crown" />}
                                         {getInitials(user?.firstName, user?.lastName)}
                                     </div>
                                     <div className="user-info-compact">
-                                        <div className="user-name-compact">{user?.firstName}</div>
+                                        <div className="user-name-compact">
+                                            {user?.firstName}
+                                            {isAdmin() && <span className="admin-badge">Admin</span>}
+                                        </div>
                                         <div className="user-status">Online</div>
                                     </div>
                                 </>
@@ -133,16 +145,29 @@ const Header = () => {
                                 <>
                                     {/* Authenticated User Header */}
                                     <div className="dropdown-user-header">
-                                        <div className="dropdown-user-avatar">
+                                        <div className={`dropdown-user-avatar ${isAdmin() ? 'admin-avatar' : ''}`}>
+                                            {isAdmin() && <Crown size={14} className="admin-crown-dropdown" />}
                                             {getInitials(user?.firstName, user?.lastName)}
                                         </div>
                                         <div className="dropdown-user-details">
                                             <div className="dropdown-user-name">
                                                 {user?.firstName} {user?.lastName}
+                                                {isAdmin() && <span className="admin-role-badge">Admin</span>}
                                             </div>
                                             <div className="dropdown-user-email">{user?.email}</div>
                                         </div>
                                     </div>
+
+                                    {/* Admin Section - Only visible to admins */}
+                                    {isAdmin() && (
+                                        <div className="dropdown-section admin-section">
+                                            <Link to="/admin" className="dropdown-item admin-item">
+                                                <Shield size={18} />
+                                                <span>Admin Dashboard</span>
+                                                <span className="admin-access-badge">ADMIN</span>
+                                            </Link>
+                                        </div>
+                                    )}
 
                                     {/* Quick Stats */}
                                     <div className="dropdown-stats">
@@ -277,16 +302,27 @@ const Header = () => {
                             {isAuthenticated ? (
                                 <>
                                     <div className="mobile-user-header">
-                                        <div className="mobile-user-avatar">
+                                        <div className={`mobile-user-avatar ${isAdmin() ? 'admin-avatar' : ''}`}>
+                                            {isAdmin() && <Crown size={14} className="admin-crown-mobile" />}
                                             {getInitials(user?.firstName, user?.lastName)}
                                         </div>
                                         <div className="mobile-user-info">
                                             <div className="mobile-user-name">
                                                 {user?.firstName} {user?.lastName}
+                                                {isAdmin() && <span className="mobile-admin-badge">Admin</span>}
                                             </div>
                                             <div className="mobile-user-email">{user?.email}</div>
                                         </div>
                                     </div>
+
+                                    {/* Admin Panel Access - Mobile */}
+                                    {isAdmin() && (
+                                        <Link to="/admin" onClick={closeMenu} className="mobile-admin-link">
+                                            <Shield size={18} style={{ marginRight: '8px' }} />
+                                            Admin Dashboard
+                                            <span className="mobile-admin-access-badge">ADMIN</span>
+                                        </Link>
+                                    )}
 
                                     <Link to="/dashboard" onClick={closeMenu}>
                                         <User size={18} style={{ marginRight: '8px' }} />

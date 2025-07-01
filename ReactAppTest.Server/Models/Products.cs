@@ -23,7 +23,8 @@ namespace ReactAppTest.Server.Models
         [MaxLength(100)]
         public string Brand { get; set; }
 
-        public bool InStock { get; set; }
+        public int StockQuantity { get; set; } = 0;
+        public bool InStock { get; set; } = true;
 
         [MaxLength(2000)]
         public string? Description { get; set; }
