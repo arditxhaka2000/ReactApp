@@ -41,7 +41,7 @@ namespace ReactAppTest.Server.Controllers
                 // Hash password
                 var passwordHash = HashPassword(request.Password);
 
-                // Create user
+                // Create user (default role is Customer)
                 var user = new Users
                 {
                     FirstName = request.FirstName,
@@ -51,6 +51,8 @@ namespace ReactAppTest.Server.Controllers
                     DateOfBirth = request.DateOfBirth,
                     Gender = request.Gender,
                     PasswordHash = passwordHash,
+                    Role = "Customer", // Default role
+                    IsAdmin = false,   // Default not admin
                     CreatedAt = DateTime.UtcNow,
                     LastLoginAt = DateTime.UtcNow,
                     IsEmailVerified = false,
@@ -72,7 +74,9 @@ namespace ReactAppTest.Server.Controllers
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
                     DateOfBirth = user.DateOfBirth,
-                    Gender = user.Gender
+                    Gender = user.Gender,
+                    Role = user.Role,        // Include role
+                    IsAdmin = user.IsAdmin   // Include admin status
                 };
 
                 _logger.LogInformation($"User registered successfully: {user.Email}");
@@ -119,7 +123,9 @@ namespace ReactAppTest.Server.Controllers
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
                     DateOfBirth = user.DateOfBirth,
-                    Gender = user.Gender
+                    Gender = user.Gender,
+                    Role = user.Role,        // Include role
+                    IsAdmin = user.IsAdmin   // Include admin status
                 };
 
                 _logger.LogInformation($"User logged in successfully: {user.Email}");
@@ -155,7 +161,9 @@ namespace ReactAppTest.Server.Controllers
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
                     DateOfBirth = user.DateOfBirth,
-                    Gender = user.Gender
+                    Gender = user.Gender,
+                    Role = user.Role,        // Include role
+                    IsAdmin = user.IsAdmin   // Include admin status
                 };
 
                 return Ok(userResponse);
@@ -164,6 +172,35 @@ namespace ReactAppTest.Server.Controllers
             {
                 _logger.LogError(ex, "Error getting current user");
                 return StatusCode(500, new { message = "Failed to get user information" });
+            }
+        }
+
+        // NEW ENDPOINT: Check if user is admin
+        [HttpGet("check-admin")]
+        [Authorize]
+        public async Task<IActionResult> CheckAdminStatus()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                    return Unauthorized();
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null || !user.IsActive)
+                    return Unauthorized();
+
+                return Ok(new
+                {
+                    isAdmin = user.IsAdmin,
+                    role = user.Role,
+                    hasAdminAccess = user.IsAdmin || user.Role == "Admin" || user.Role == "SuperAdmin"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking admin status");
+                return StatusCode(500, new { message = "Failed to check admin status" });
             }
         }
 
@@ -207,8 +244,6 @@ namespace ReactAppTest.Server.Controllers
         [Authorize]
         public IActionResult Logout()
         {
-            // In a stateless JWT system, logout is typically handled client-side
-            // by removing the token. However, you could implement token blacklisting here
             _logger.LogInformation($"User logged out");
             return Ok(new { message = "Logged out successfully" });
         }
@@ -249,7 +284,10 @@ namespace ReactAppTest.Server.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
-                new Claim("userId", user.Id.ToString())
+                new Claim(ClaimTypes.Role, user.Role), // Add role claim
+                new Claim("userId", user.Id.ToString()),
+                new Claim("isAdmin", user.IsAdmin.ToString()), // Add admin claim
+                new Claim("role", user.Role) // Add custom role claim
             };
 
             var token = new JwtSecurityToken(
@@ -271,7 +309,6 @@ namespace ReactAppTest.Server.Controllers
 
         private string HashPassword(string password)
         {
-            // Using SHA256 with salt - for production, consider using BCrypt
             var salt = _configuration["Auth:Salt"] ?? "DefaultSaltValue";
             using var sha256 = SHA256.Create();
             var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password + salt));
@@ -285,7 +322,21 @@ namespace ReactAppTest.Server.Controllers
         }
     }
 
-    // DTOs for Authentication only
+    // Updated UserResponse to include role information
+    public class UserResponse
+    {
+        public int Id { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public string? Gender { get; set; }
+        public string Role { get; set; }        // Add role
+        public bool IsAdmin { get; set; }       // Add admin status
+    }
+
+    // Other DTOs remain the same...
     public class RegisterRequest
     {
         [Required]
@@ -338,16 +389,5 @@ namespace ReactAppTest.Server.Controllers
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).*$",
             ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, and one number")]
         public string NewPassword { get; set; }
-    }
-
-    public class UserResponse
-    {
-        public int Id { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Email { get; set; }
-        public string? PhoneNumber { get; set; }
-        public DateTime DateOfBirth { get; set; }
-        public string? Gender { get; set; }
     }
 }

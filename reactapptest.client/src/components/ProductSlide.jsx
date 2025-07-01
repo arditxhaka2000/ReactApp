@@ -12,15 +12,37 @@ const ProductSlide = () => {
             .then(data => setProducts(data.slice(0, 10)))
             .catch(console.error);
     }, []);
-    console.log(products);
+    console.log('asdadasdas',products);
     return (
         <div className="product-slider-wrapper">
-            <Swiper slidesPerView={5} spaceBetween={10} loop={true}>
+            <Swiper
+                loop={true}
+                spaceBetween={10}
+                breakpoints={{
+                    320: {
+                        slidesPerView: 1.2,
+                    },
+                    480: {
+                        slidesPerView: 2,
+                    },
+                    768: {
+                        slidesPerView: 3,
+                    },
+                    1024: {
+                        slidesPerView: 4,
+                    },
+                    1280: {
+                        slidesPerView: 5,
+                    },
+                }}
+            >
+
                 {products.map(p => (
                     <SwiperSlide key={p.id}>
                         <div className="product-card">
                             <div className="image-container">
-                                <img src={p.images} alt={p.name} />
+                                <img src={p.images[0]} alt={p.name} loading="lazy" />
+
                                 <button className="quick-buy-btn">Quick Buy</button>
                             </div>
                             <div className="product-info">

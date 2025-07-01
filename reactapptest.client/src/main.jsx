@@ -1,8 +1,9 @@
-﻿import { StrictMode } from 'react';
+﻿// Update your main.jsx routing:
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute'; // Fixed import - using named export
+import { ProtectedRoute } from './components/ProtectedRoute';
 import ProductListingPage from './page/products';
 import ProductDetails from './page/details';
 import './index.css';
@@ -14,8 +15,9 @@ import Collections from './components/collections.jsx';
 import Layout from './components/Layout';
 import Checkout from './page/checkout.jsx';
 import OrderView from './components/OrderView.jsx';
-import LoginRegisterPage from './components/LoginRegisterPage'; // New combined page
+import LoginRegisterPage from './components/LoginRegisterPage';
 import UserDashboard from './page/UserDashboard.jsx';
+import AdminDashboard from './components/AdminPage.jsx';
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
@@ -23,7 +25,6 @@ createRoot(document.getElementById('root')).render(
             <BrowserRouter>
                 <Layout>
                     <Routes>
-                        {/* Public routes - no authentication required */}
                         <Route path="/" element={<App />} />
                         <Route path="/app" element={<App />} />
                         <Route path="/products" element={<ProductListingPage />} />
@@ -31,13 +32,11 @@ createRoot(document.getElementById('root')).render(
                         <Route path="/category" element={<Categories />} />
                         <Route path="/collections" element={<Collections />} />
                         <Route path="/cart" element={<Cart />} />
-
-                        {/* Authentication routes - Combined login/register page */}
                         <Route path="/login" element={<LoginRegisterPage />} />
                         <Route path="/register" element={<LoginRegisterPage />} />
                         <Route path="/auth" element={<LoginRegisterPage />} />
 
-                        {/* Protected routes - require authentication */}
+                        {/* Protected routes */}
                         <Route
                             path="/checkout"
                             element={
@@ -46,7 +45,6 @@ createRoot(document.getElementById('root')).render(
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/account"
                             element={
@@ -55,7 +53,6 @@ createRoot(document.getElementById('root')).render(
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/dashboard"
                             element={
@@ -64,7 +61,6 @@ createRoot(document.getElementById('root')).render(
                                 </ProtectedRoute>
                             }
                         />
-
                         <Route
                             path="/orders/:orderNumber"
                             element={
@@ -73,6 +69,9 @@ createRoot(document.getElementById('root')).render(
                                 </ProtectedRoute>
                             }
                         />
+
+                        {/* Admin route - no extra protection needed since AdminPage handles it */}
+                        <Route path="/admin" element={<AdminDashboard />} />
                     </Routes>
                 </Layout>
             </BrowserRouter>
